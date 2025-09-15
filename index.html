@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจองห้องนวัตกรรม - โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#0ea5e9">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ระบบจองห้องนวัตกรรม">
     <style>
         body {
             font-family: 'Kanit', sans-serif;
@@ -39,10 +44,12 @@
             position: relative;
             min-height: 120px;
             border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .calendar-day:not(.disabled):hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.2), 0 4px 10px rgba(0,0,0,0.1);
+            border-color: #38bdf8;
         }
         .calendar-day.disabled {
             background-color: #1e293b; /* Slate 800 - Darker Disabled Day */
@@ -58,7 +65,7 @@
             color: #64748b; /* Slate 500 for disabled background */
         }
         .booked-label {
-            background-color: #ef4444; /* Red 500 */
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: #ffffff;
             font-weight: 600;
             padding: 4px 10px;
@@ -67,6 +74,7 @@
             margin-top: 4px;
             display: inline-block;
             animation: pulse-animation 2s infinite;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
         }
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.7);
@@ -114,6 +122,7 @@
             border: 1px solid #475569; /* Slate 600 */
             cursor: pointer;
             border-radius: 0.375rem;
+            position: relative;
         }
         .time-slot-label input:checked + span {
             background-color: #0ea5e9; /* Sky 500 */
@@ -129,28 +138,176 @@
             color: #64748b; /* Slate 500 */
             text-decoration: line-through;
         }
+        
+        .time-slot-label.blocked {
+            background-color: #7c2d12; /* Red 900 */
+            border-color: #991b1b; /* Red 800 */
+            cursor: not-allowed;
+        }
+        
+        .time-slot-label.blocked span {
+            color: #fca5a5; /* Red 300 */
+            text-decoration: line-through;
+        }
+        
+        .time-slot-label.blocked::after {
+            content: '🚫';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 12px;
+        }
+        
+        /* Loading states */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        /* Success animations */
+        @keyframes success-bounce {
+            0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
+            40%, 43% { transform: translate3d(0, -8px, 0); }
+            70% { transform: translate3d(0, -4px, 0); }
+            90% { transform: translate3d(0, -2px, 0); }
+        }
+        
+        .success-animation {
+            animation: success-bounce 1s ease;
+        }
+        
+        /* Improved form styling */
+        .form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus + label,
+        .form-textarea:focus + label {
+            color: #38bdf8;
+        }
+        
+        /* Better mobile responsiveness */
+        @media (max-width: 768px) {
+            .calendar-day {
+                min-height: 80px;
+                font-size: 0.875rem;
+            }
+            
+            .day-number {
+                font-size: 1rem;
+            }
+            
+            .booked-label {
+                font-size: 0.625rem;
+                padding: 2px 6px;
+            }
+        }
+        
+        /* Enhanced modal */
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 16px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .notification.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div id="loading-spinner" class="fixed inset-0 bg-slate-900 bg-opacity-70 flex justify-center items-center z-50">
-        <div class="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-sky-500"></div>
-        <p class="text-slate-300 text-xl ml-4">กำลังโหลดข้อมูล...</p>
+    <div id="loading-spinner" class="fixed inset-0 bg-slate-900 bg-opacity-70 flex justify-center items-center z-50 backdrop-blur-sm">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-sky-500 mx-auto mb-4"></div>
+            <p class="text-slate-300 text-xl">กำลังโหลดข้อมูล...</p>
+            <div class="mt-2 text-slate-400 text-sm">กรุณารอสักครู่</div>
+        </div>
     </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
 
     <div class="max-w-7xl mx-auto">
         <header class="text-center mb-8 p-4">
-            <h1 class="text-3xl md:text-5xl font-bold text-sky-400" style="text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);">ระบบจองห้องนวัตกรรม</h1>
-            <p class="text-lg md:text-xl text-slate-400">โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</p>
+            <div class="mb-4">
+                <div class="text-6xl mb-2">📚</div>
+                <h1 class="text-3xl md:text-5xl font-bold text-sky-400" style="text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);">ระบบจองห้องนวัตกรรม</h1>
+                <p class="text-lg md:text-xl text-slate-400 mt-2">โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</p>
+                <div class="flex justify-center items-center flex-wrap gap-3 mt-4 text-slate-500 text-xs">
+                    <div class="flex items-center gap-1">
+                        <div class="w-3 h-3 bg-white rounded border"></div>
+                        <span>ว่าง</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-3 h-3 bg-red-500 rounded"></div>
+                        <span>จองแล้ว</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-3 h-3 bg-red-900 rounded"></div>
+                        <span>ปิดกั้น</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-3 h-3 bg-slate-600 rounded"></div>
+                        <span>ผ่านไปแล้ว</span>
+                    </div>
+                </div>
+            </div>
         </header>
+
+        <!-- Quick Actions -->
+        <div class="mb-6 flex flex-col md:flex-row gap-4 justify-center items-center">
+            <div class="flex gap-2">
+                <button id="today-btn" class="btn-secondary px-4 py-2 rounded-lg text-sm">วันนี้</button>
+                <button id="refresh-btn" class="btn-secondary px-4 py-2 rounded-lg text-sm">รีเฟรช</button>
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <input type="text" id="search-bookings" placeholder="ค้นหาการจอง..." class="form-input px-3 py-2 w-full md:w-48 rounded-lg text-sm">
+                <button id="clear-search" class="btn-secondary px-3 py-2 rounded-lg text-sm">ล้าง</button>
+            </div>
+        </div>
 
         <main id="calendar-container" class="p-6 rounded-xl bg-slate-900/50 border border-slate-700" style="box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);">
             <div class="flex justify-between items-center mb-6">
-                <button id="prev-month" class="p-2 rounded-full hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="prev-month" class="p-3 rounded-full hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <h2 id="month-year" class="text-2xl md:text-3xl font-bold text-slate-300"></h2>
-                <button id="next-month" class="p-2 rounded-full hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="next-month" class="p-3 rounded-full hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
@@ -162,9 +319,9 @@
     </div>
 
     <!-- Main Modal for Booking and Details -->
-    <div id="main-modal" class="fixed inset-0 z-40 hidden items-center justify-center p-4 modal-backdrop">
-        <div class="modal-content p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <h3 class="text-2xl font-bold text-slate-200 mb-4">รายละเอียดและจองห้อง วันที่ <span id="modal-date-display"></span></h3>
+    <div id="main-modal" class="fixed inset-0 z-40 hidden items-center justify-center p-2 md:p-4 modal-backdrop">
+        <div class="modal-content p-4 md:p-6 w-full max-w-3xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl md:text-2xl font-bold text-slate-200 mb-4">รายละเอียดและจองห้อง วันที่ <span id="modal-date-display"></span></h3>
             
             <div id="existing-bookings-container" class="mb-6">
                 <h4 class="text-xl text-slate-300 mb-2 border-b-2 border-slate-600 pb-1">รายการที่จองแล้ว</h4>
@@ -173,32 +330,40 @@
 
             <div id="booking-form-container">
                  <h4 class="text-xl text-slate-300 mb-2 border-b-2 border-slate-600 pb-1">จองเวลาเพิ่มเติม</h4>
+                 <div id="blocked-info" class="mb-4 p-3 bg-amber-900/30 border border-amber-700 rounded-lg text-amber-200 text-sm hidden">
+                    <p class="font-semibold mb-1">⚠️ ช่วงเวลาที่ปิดกั้นในวันนี้:</p>
+                    <div id="blocked-periods-list"></div>
+                 </div>
                 <form id="booking-form" class="mt-4">
                     <div class="mb-4">
                         <label class="block text-lg text-slate-400 mb-2">เลือกช่วงเวลา (เลือกได้หลายช่วง)</label>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-2" id="time-slots-container"></div>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 my-4">
-                        <button type="button" id="select-all-day" class="btn-secondary p-2">จองทั้งวัน</button>
-                        <button type="button" id="select-morning" class="btn-secondary p-2">ครึ่งเช้า</button>
-                        <button type="button" id="select-afternoon" class="btn-secondary p-2">ครึ่งบ่าย</button>
-                        <button type="button" id="clear-selection" class="btn-secondary p-2">ล้างที่เลือก</button>
+                    <div class="grid grid-cols-2 gap-2 my-4">
+                        <button type="button" id="select-all-day" class="btn-secondary p-2 text-sm">จองทั้งวัน</button>
+                        <button type="button" id="select-morning" class="btn-secondary p-2 text-sm">ครึ่งเช้า</button>
+                        <button type="button" id="select-afternoon" class="btn-secondary p-2 text-sm">ครึ่งบ่าย</button>
+                        <button type="button" id="clear-selection" class="btn-secondary p-2 text-sm">ล้างที่เลือก</button>
                     </div>
                      <div class="mb-4">
                         <label for="custom-time" class="block text-lg text-slate-400 mb-2">หรือ กำหนดเวลาเอง</label>
                         <input type="text" id="custom-time" name="custom-time" class="form-input w-full p-2" placeholder="เช่น 9.00-11.30 น.">
                     </div>
-                    <div class="mb-4">
-                        <label for="activity" class="block text-lg text-slate-400 mb-2">กิจกรรม</label>
-                        <textarea id="activity" name="activity" rows="2" class="form-textarea w-full p-2" required></textarea>
+                    <div class="form-group">
+                        <label for="activity" class="block text-lg text-slate-400 mb-2">กิจกรรม *</label>
+                        <textarea id="activity" name="activity" rows="3" class="form-textarea w-full p-3 rounded-lg" required placeholder="ระบุชื่อกิจกรรมที่จะจัดขึ้น เช่น การสอนวิทยาศาสตร์, การทำโครงงาน"></textarea>
                     </div>
-                    <div class="mb-4">
-                        <label for="teacher" class="block text-lg text-slate-400 mb-2">ครูผู้ดูแล</label>
-                        <input type="text" id="teacher" name="teacher" class="form-input w-full p-2" required>
+                    <div class="form-group">
+                        <label for="teacher" class="block text-lg text-slate-400 mb-2">ครูผู้ดูแล *</label>
+                        <input type="text" id="teacher" name="teacher" class="form-input w-full p-3 rounded-lg" required placeholder="ชื่อครูผู้รับผิดชอบ">
                     </div>
-                    <div class="mb-4">
-                        <label for="students" class="block text-lg text-slate-400 mb-2">จำนวนนักเรียน / ห้องเรียน</label>
-                        <input type="text" id="students" name="students" class="form-input w-full p-2" required>
+                    <div class="form-group">
+                        <label for="students" class="block text-lg text-slate-400 mb-2">จำนวนนักเรียน / ห้องเรียน *</label>
+                        <input type="text" id="students" name="students" class="form-input w-full p-3 rounded-lg" required placeholder="เช่น 25 คน หรือ ม.1/1">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact" class="block text-lg text-slate-400 mb-2">เบอร์ติดต่อ</label>
+                        <input type="tel" id="contact" name="contact" class="form-input w-full p-3 rounded-lg" placeholder="เบอร์โทรศัพท์สำหรับติดต่อกลับ">
                     </div>
                     <input type="hidden" id="selected-date-input" name="date">
                     <div class="flex justify-end gap-4 mt-6">
@@ -240,6 +405,80 @@
             
             let currentMonthDate = new Date();
             let bookings = [];
+            let isSubmitting = false;
+
+            // Notification system
+            function showNotification(message, type = 'success', duration = 5000) {
+                const container = document.getElementById('notification-container');
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span>${message}</span>
+                        <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">✕</button>
+                    </div>
+                `;
+                container.appendChild(notification);
+                
+                // Show notification
+                setTimeout(() => notification.classList.add('show'), 100);
+                
+                // Auto remove
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, duration);
+            }
+
+            // Form validation
+            function validateForm() {
+                const activity = document.getElementById('activity').value.trim();
+                const teacher = document.getElementById('teacher').value.trim();
+                const students = document.getElementById('students').value.trim();
+                const selectedTimes = document.querySelectorAll('#time-slots-container input[type="checkbox"]:checked');
+                const customTime = document.getElementById('custom-time').value.trim();
+
+                if (!activity) {
+                    showNotification('กรุณาระบุกิจกรรม', 'error');
+                    return false;
+                }
+                if (!teacher) {
+                    showNotification('กรุณาระบุครูผู้ดูแล', 'error');
+                    return false;
+                }
+                if (!students) {
+                    showNotification('กรุณาระบุจำนวนนักเรียน', 'error');
+                    return false;
+                }
+                if (selectedTimes.length === 0 && !customTime) {
+                    showNotification('กรุณาเลือกช่วงเวลา หรือกำหนดเวลาเอง', 'error');
+                    return false;
+                }
+                return true;
+            }
+
+            // Save form data to localStorage
+            function saveFormData() {
+                const formData = {
+                    activity: document.getElementById('activity').value,
+                    teacher: document.getElementById('teacher').value,
+                    students: document.getElementById('students').value,
+                    contact: document.getElementById('contact').value
+                };
+                localStorage.setItem('bookingFormData', JSON.stringify(formData));
+            }
+
+            // Load form data from localStorage
+            function loadFormData() {
+                const saved = localStorage.getItem('bookingFormData');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    document.getElementById('activity').value = data.activity || '';
+                    document.getElementById('teacher').value = data.teacher || '';
+                    document.getElementById('students').value = data.students || '';
+                    document.getElementById('contact').value = data.contact || '';
+                }
+            }
 
             const timeSlots = [
                 { id: 't1', label: 'คาบ 1', time: '8:30-9:20' },
@@ -253,6 +492,20 @@
                 { id: 't9', label: 'คาบ 9', time: '15:20-16:10' },
                 { id: 't10', label: 'คาบ 10', time: '16:10-17:00' },
             ];
+
+            // ตารางปิดกั้นการจองตามวันในสัปดาห์
+            const blockedTimeSlots = {
+                1: ['t7', 't8'], // วันจันทร์: คาบ 7-8
+                2: ['t1', 't2', 't5', 't6', 't7', 't8'], // วันอังคาร: คาบ 1-2 และ คาบ 5-8
+                3: ['t6', 't7', 't9', 't10'], // วันพุธ: คาบ 6-7 และ คาบ 9-10
+                5: ['t1', 't2', 't3', 't7', 't8', 't9'] // วันศุกร์: คาบ 1-3 และ คาบ 7-9
+            };
+
+            // ฟังก์ชันตรวจสอบว่าช่วงเวลานั้นถูกปิดกั้นหรือไม่
+            function isTimeSlotBlocked(date, slotId) {
+                const dayOfWeek = new Date(date).getDay();
+                return blockedTimeSlots[dayOfWeek] && blockedTimeSlots[dayOfWeek].includes(slotId);
+            }
 
             function generateTimeSlots() {
                 const container = document.getElementById('time-slots-container');
@@ -268,23 +521,50 @@
                 });
             }
 
-            async function fetchBookings() {
+            // Cache for bookings
+            let bookingsCache = null;
+            let lastFetchTime = 0;
+            const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+            async function fetchBookings(forceRefresh = false) {
+                const now = Date.now();
+                
+                // Use cache if available and not expired
+                if (!forceRefresh && bookingsCache && (now - lastFetchTime) < CACHE_DURATION) {
+                    bookings = bookingsCache;
+                    renderCalendar(currentMonthDate);
+                    return;
+                }
+
                 loadingSpinner.style.display = 'flex';
                 try {
-                    const response = await fetch(`${SCRIPT_URL}?t=${new Date().getTime()}`);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+                    const response = await fetch(`${SCRIPT_URL}?t=${now}`, {
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
 
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     
                     const result = await response.json();
                     if (result.status === "success") {
                         bookings = result.data || [];
+                        bookingsCache = bookings;
+                        lastFetchTime = now;
                     } else {
                         throw new Error(result.message || 'Failed to parse bookings.');
                     }
                     renderCalendar(currentMonthDate);
                 } catch (error) {
-                    console.error('Error fetching bookings:', error);
-                    alert('ไม่สามารถดึงข้อมูลการจองได้\nสาเหตุที่เป็นไปได้:\n1. ยังไม่ได้ Deploy Google Apps Script เวอร์ชั่นล่าสุด\n2. ตั้งค่า "Who has access" ไม่ใช่ "Anyone"');
+                    if (error.name === 'AbortError') {
+                        showNotification('การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่', 'error', 7000);
+                    } else {
+                        console.error('Error fetching bookings:', error);
+                        showNotification('ไม่สามารถดึงข้อมูลการจองได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต', 'error', 7000);
+                    }
                 } finally {
                     loadingSpinner.style.display = 'none';
                 }
@@ -295,10 +575,25 @@
                     return '';
                 }
 
+                // Filter bookings based on search query
+                let filteredBookings = bookingsForDay;
+                if (searchQuery) {
+                    filteredBookings = bookingsForDay.filter(b => 
+                        (b.activity && b.activity.toLowerCase().includes(searchQuery)) ||
+                        (b.teacher && b.teacher.toLowerCase().includes(searchQuery)) ||
+                        (b.students && b.students.toLowerCase().includes(searchQuery)) ||
+                        (b.time && b.time.toLowerCase().includes(searchQuery))
+                    );
+                }
+
+                if (filteredBookings.length === 0 && searchQuery) {
+                    return '';
+                }
+
                 const allBookedTimes = bookingsForDay.flatMap(b => b.time ? b.time.split(',').map(t => t.trim()) : []);
 
                 if (allBookedTimes.some(t => t.toLowerCase().includes('ทั้งวัน'))) {
-                    return 'จองแล้ว (ทั้งวัน)';
+                    return searchQuery && filteredBookings.length === 0 ? '' : 'จองแล้ว (ทั้งวัน)';
                 }
                 
                 const periodRegex = /คาบ\s*\d+/g;
@@ -318,11 +613,11 @@
                 });
 
                 if (totalPeriods > 0) {
-                    return `จองแล้ว (${totalPeriods} คาบ)`;
+                    return searchQuery && filteredBookings.length === 0 ? '' : `จองแล้ว (${totalPeriods} คาบ)`;
                 }
 
                 if (allBookedTimes.length > 0) {
-                    return 'จองแล้ว'; // Fallback for custom times
+                    return searchQuery && filteredBookings.length === 0 ? '' : 'จองแล้ว'; // Fallback for custom times
                 }
 
                 return '';
@@ -380,6 +675,24 @@
                 modalDateDisplay.textContent = dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
                 selectedDateInput.value = dateString;
                 bookingForm.reset();
+                loadFormData(); // Load saved form data
+
+                // แสดงข้อมูลการปิดกั้น
+                const dayOfWeek = dateObj.getDay();
+                const blockedInfo = document.getElementById('blocked-info');
+                const blockedPeriodsList = document.getElementById('blocked-periods-list');
+                
+                if (blockedTimeSlots[dayOfWeek]) {
+                    const blockedPeriods = blockedTimeSlots[dayOfWeek].map(slotId => {
+                        const slot = timeSlots.find(s => s.id === slotId);
+                        return `${slot.label} (${slot.time})`;
+                    }).join(', ');
+                    
+                    blockedPeriodsList.textContent = blockedPeriods;
+                    blockedInfo.classList.remove('hidden');
+                } else {
+                    blockedInfo.classList.add('hidden');
+                }
 
                 const bookingsForDay = bookings.filter(b => b.date === dateString);
                 const isFullyBooked = bookingsForDay.some(b => b.time && b.time.toLowerCase().includes('ทั้งวัน'));
@@ -387,16 +700,29 @@
                 const bookedTimeValues = bookingsForDay
                     .flatMap(b => (b.time ? b.time.split(',').map(t => t.trim()) : []));
 
-                document.querySelectorAll('#time-slots-container input[type="checkbox"]').forEach(checkbox => {
+                document.querySelectorAll('#time-slots-container input[type="checkbox"]').forEach((checkbox, index) => {
                     const label = checkbox.parentElement;
-                    if (bookedTimeValues.includes(checkbox.value)) {
+                    const slotId = timeSlots[index].id;
+                    const isBlocked = isTimeSlotBlocked(dateString, slotId);
+                    const isBooked = bookedTimeValues.includes(checkbox.value);
+                    
+                    // Reset classes
+                    label.classList.remove('disabled', 'blocked');
+                    
+                    if (isBlocked) {
+                        // ช่วงเวลาถูกปิดกั้นตามวันในสัปดาห์
+                        checkbox.disabled = true;
+                        checkbox.checked = false;
+                        label.classList.add('blocked');
+                    } else if (isBooked) {
+                        // ช่วงเวลาถูกจองแล้ว
                         checkbox.disabled = true;
                         checkbox.checked = false; 
                         label.classList.add('disabled');
                     } else {
+                        // ช่วงเวลาว่าง
                         checkbox.disabled = false;
                         checkbox.checked = false;
-                        label.classList.remove('disabled');
                     }
                 });
 
@@ -439,17 +765,25 @@
 
             bookingForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                
+                // Prevent double submission
+                if (isSubmitting) return;
+                isSubmitting = true;
+                
+                // Validate form
+                if (!validateForm()) {
+                    isSubmitting = false;
+                    return;
+                }
+                
+                // Save form data for future use
+                saveFormData();
+                
                 loadingSpinner.style.display = 'flex';
                 
                 const formData = new FormData(bookingForm);
                 const selectedTimes = formData.getAll('time');
                 const customTime = formData.get('custom-time').trim();
-
-                if (selectedTimes.length === 0 && !customTime) {
-                    alert('กรุณาเลือกช่วงเวลา หรือกำหนดเวลาเอง');
-                    loadingSpinner.style.display = 'none';
-                    return;
-                }
 
                 let timeString = selectedTimes.join(', ');
                 if (customTime) {
@@ -462,6 +796,7 @@
                 urlEncodedData.append('activity', formData.get('activity'));
                 urlEncodedData.append('teacher', formData.get('teacher'));
                 urlEncodedData.append('students', formData.get('students'));
+                urlEncodedData.append('contact', formData.get('contact') || '');
 
                 try {
                     const response = await fetch(SCRIPT_URL, {
@@ -476,15 +811,20 @@
                          throw new Error(result.message || 'Failed to submit booking.');
                     }
 
-                    alert('ทำการจองสำเร็จแล้ว!');
+                    showNotification('ทำการจองสำเร็จแล้ว! 🎉', 'success');
                     mainModal.style.display = 'none';
-                    await fetchBookings();
+                    document.getElementById('calendar-container').classList.add('success-animation');
+                    setTimeout(() => {
+                        document.getElementById('calendar-container').classList.remove('success-animation');
+                    }, 1000);
+                    await fetchBookings(true);
 
                 } catch (error) {
                     console.error('Error submitting booking:', error);
-                    alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล!\nกรุณาตรวจสอบว่าคุณได้ Deploy Google Apps Script เวอร์ชั่นล่าสุดแล้ว และตั้งค่า "Who has access" เป็น "Anyone"');
+                    showNotification('เกิดข้อผิดพลาดในการบันทึกข้อมูล! กรุณาลองใหม่อีกครั้ง', 'error', 7000);
                 } finally {
                     loadingSpinner.style.display = 'none';
+                    isSubmitting = false;
                 }
             });
 
@@ -509,8 +849,86 @@
                 });
             });
             document.getElementById('clear-selection').addEventListener('click', () => {
-                document.querySelectorAll('#time-slots-container input:not(:disabled)').forEach(cb => cb.checked = false);
+                document.querySelectorAll('#time-slots-container input').forEach(cb => cb.checked = false);
             });
+
+            // Search functionality
+            let searchQuery = '';
+            document.getElementById('search-bookings').addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                renderCalendar(currentMonthDate);
+            });
+
+            document.getElementById('clear-search').addEventListener('click', () => {
+                document.getElementById('search-bookings').value = '';
+                searchQuery = '';
+                renderCalendar(currentMonthDate);
+            });
+
+            // Quick action buttons
+            document.getElementById('today-btn').addEventListener('click', () => {
+                currentMonthDate = new Date();
+                renderCalendar(currentMonthDate);
+            });
+
+            document.getElementById('refresh-btn').addEventListener('click', () => {
+                showNotification('กำลังรีเฟรชข้อมูล...', 'success', 2000);
+                fetchBookings(true); // Force refresh
+            });
+
+            // Auto-save form data while typing
+            ['activity', 'teacher', 'students', 'contact'].forEach(fieldId => {
+                document.getElementById(fieldId).addEventListener('input', () => {
+                    setTimeout(saveFormData, 500); // Debounce save
+                });
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'r':
+                            e.preventDefault();
+                            fetchBookings();
+                            break;
+                        case 'f':
+                            e.preventDefault();
+                            document.getElementById('search-bookings').focus();
+                            break;
+                    }
+                }
+                if (e.key === 'Escape' && mainModal.style.display === 'flex') {
+                    mainModal.style.display = 'none';
+                }
+            });
+
+            // Show app install prompt
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                // Show install button if needed
+            });
+
+            // Handle offline/online status
+            function updateConnectionStatus() {
+                if (navigator.onLine) {
+                    showNotification('เชื่อมต่ออินเทอร์เน็ตแล้ว', 'success', 3000);
+                    fetchBookings(true);
+                } else {
+                    showNotification('ไม่มีการเชื่อมต่ออินเทอร์เน็ต กำลังใช้ข้อมูลแคช', 'error', 5000);
+                }
+            }
+
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+
+            // Auto-refresh data every 10 minutes
+            setInterval(() => {
+                if (navigator.onLine) {
+                    fetchBookings();
+                }
+            }, 10 * 60 * 1000);
 
             // Initial load
             generateTimeSlots();
