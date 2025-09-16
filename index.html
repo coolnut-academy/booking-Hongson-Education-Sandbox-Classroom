@@ -140,18 +140,18 @@
         }
         
         .time-slot-label.blocked {
-            background-color: #7c2d12; /* Red 900 */
-            border-color: #991b1b; /* Red 800 */
+            background-color: #1e3a8a; /* Blue 900 */
+            border-color: #1d4ed8; /* Blue 700 */
             cursor: not-allowed;
         }
         
         .time-slot-label.blocked span {
-            color: #fca5a5; /* Red 300 */
-            text-decoration: line-through;
+            color: #93c5fd; /* Blue 300 */
+            text-decoration: none;
         }
         
         .time-slot-label.blocked::after {
-            content: '🚫';
+            content: '💻';
             position: absolute;
             top: 2px;
             right: 4px;
@@ -268,6 +268,7 @@
                 <div class="text-6xl mb-2">📚</div>
                 <h1 class="text-3xl md:text-5xl font-bold text-sky-400" style="text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);">ระบบจองห้องนวัตกรรม</h1>
                 <p class="text-lg md:text-xl text-slate-400 mt-2">โรงเรียนห้องสอนศึกษา ในพระอุปถัมภ์ฯ</p>
+                <p class="text-sm text-slate-500 mt-1">พัฒนาเว็บไซต์โดย: นายสาธิต ศิริวัชน์</p>
                 <div class="flex justify-center items-center flex-wrap gap-3 mt-4 text-slate-500 text-xs">
                     <div class="flex items-center gap-1">
                         <div class="w-3 h-3 bg-white rounded border"></div>
@@ -279,7 +280,7 @@
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-3 h-3 bg-red-900 rounded"></div>
-                        <span>ปิดกั้น</span>
+                        <span>คาบเรียนคอมพิวเตอร์</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-3 h-3 bg-slate-600 rounded"></div>
@@ -294,6 +295,7 @@
             <div class="flex gap-2">
                 <button id="today-btn" class="btn-secondary px-4 py-2 rounded-lg text-sm">วันนี้</button>
                 <button id="refresh-btn" class="btn-secondary px-4 py-2 rounded-lg text-sm">รีเฟรช</button>
+                <button id="stats-btn" class="btn-primary px-4 py-2 rounded-lg text-sm">📊 สถิติการใช้งาน</button>
             </div>
             <div class="flex items-center gap-2 w-full md:w-auto">
                 <input type="text" id="search-bookings" placeholder="ค้นหาการจอง..." class="form-input px-3 py-2 w-full md:w-48 rounded-lg text-sm">
@@ -330,9 +332,10 @@
 
             <div id="booking-form-container">
                  <h4 class="text-xl text-slate-300 mb-2 border-b-2 border-slate-600 pb-1">จองเวลาเพิ่มเติม</h4>
-                 <div id="blocked-info" class="mb-4 p-3 bg-amber-900/30 border border-amber-700 rounded-lg text-amber-200 text-sm hidden">
-                    <p class="font-semibold mb-1">⚠️ ช่วงเวลาที่ปิดกั้นในวันนี้:</p>
+                 <div id="blocked-info" class="mb-4 p-3 bg-blue-900/30 border border-blue-700 rounded-lg text-blue-200 text-sm hidden">
+                    <p class="font-semibold mb-1">💻 คาบเรียนประจำวิชาคอมพิวเตอร์ในวันนี้:</p>
                     <div id="blocked-periods-list"></div>
+                    <p class="text-xs mt-2 text-blue-300">* ช่วงเวลาเหล่านี้มีการเรียนการสอนประจำ ไม่สามารถจองเพิ่มเติมได้</p>
                  </div>
                 <form id="booking-form" class="mt-4">
                     <div class="mb-4">
@@ -377,6 +380,126 @@
 
             <div class="flex justify-end mt-6">
                  <button type="button" id="close-main-modal" class="btn-secondary py-2 px-6">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Modal -->
+    <div id="stats-modal" class="fixed inset-0 z-40 hidden items-center justify-center p-2 md:p-4 modal-backdrop">
+        <div class="modal-content p-4 md:p-6 w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl md:text-3xl font-bold text-slate-200">📊 สถิติการใช้งานห้องนวัตกรรม</h3>
+                <button id="close-stats-modal" class="btn-secondary p-2 rounded-lg">✕</button>
+            </div>
+            
+            <!-- Statistics Navigation -->
+            <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-600 pb-4">
+                <button id="stats-total-btn" class="stats-tab-btn btn-primary px-4 py-2 rounded-lg text-sm">สถิติรวม</button>
+                <button id="stats-yearly-btn" class="stats-tab-btn btn-secondary px-4 py-2 rounded-lg text-sm">รายปี</button>
+                <button id="stats-monthly-btn" class="stats-tab-btn btn-secondary px-4 py-2 rounded-lg text-sm">รายเดือน</button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="stats-loading" class="text-center py-8 hidden">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-sky-500 mx-auto mb-4"></div>
+                <p class="text-slate-300">กำลังคำนวณสถิติ...</p>
+            </div>
+
+            <!-- Statistics Content -->
+            <div id="stats-content">
+                <!-- Total Statistics -->
+                <div id="stats-total-content" class="stats-content">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-gradient-to-br from-blue-900 to-blue-800 p-6 rounded-xl border border-blue-700">
+                            <h4 class="text-xl font-semibold text-blue-200 mb-2">📅 รวมทั้งหมด</h4>
+                            <div class="text-3xl font-bold text-white mb-1" id="total-bookings">0</div>
+                            <div class="text-blue-300 text-sm">ครั้งการใช้งาน</div>
+                            <div class="text-2xl font-semibold text-blue-100 mt-2" id="total-hours">0</div>
+                            <div class="text-blue-300 text-sm">ชั่วโมง</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-900 to-green-800 p-6 rounded-xl border border-green-700">
+                            <h4 class="text-xl font-semibold text-green-200 mb-2">✅ การจองห้องเรียน</h4>
+                            <div class="text-3xl font-bold text-white mb-1" id="actual-bookings">0</div>
+                            <div class="text-green-300 text-sm">ครั้งการจอง</div>
+                            <div class="text-2xl font-semibold text-green-100 mt-2" id="actual-hours">0</div>
+                            <div class="text-green-300 text-sm">ชั่วโมง</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-900 to-blue-800 p-6 rounded-xl border border-blue-700">
+                            <h4 class="text-xl font-semibold text-blue-200 mb-2">💻 คาบเรียนคอมพิวเตอร์</h4>
+                            <div class="text-3xl font-bold text-white mb-1" id="blocked-periods">0</div>
+                            <div class="text-blue-300 text-sm">คาบเรียนประจำ</div>
+                            <div class="text-2xl font-semibold text-blue-100 mt-2" id="blocked-hours">0</div>
+                            <div class="text-blue-300 text-sm">ชั่วโมง</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Yearly Statistics -->
+                <div id="stats-yearly-content" class="stats-content hidden">
+                    <div class="mb-4">
+                        <label for="year-select" class="block text-slate-300 mb-2">เลือกปี:</label>
+                        <select id="year-select" class="form-input p-2 rounded-lg w-48">
+                            <!-- Years will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div id="yearly-stats-display" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Yearly stats will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Monthly Statistics -->
+                <div id="stats-monthly-content" class="stats-content hidden">
+                    <div class="flex gap-4 mb-4">
+                        <div>
+                            <label for="month-select" class="block text-slate-300 mb-2">เลือกเดือน:</label>
+                            <select id="month-select" class="form-input p-2 rounded-lg">
+                                <option value="1">มกราคม</option>
+                                <option value="2">กุมภาพันธ์</option>
+                                <option value="3">มีนาคม</option>
+                                <option value="4">เมษายน</option>
+                                <option value="5">พฤษภาคม</option>
+                                <option value="6">มิถุนายน</option>
+                                <option value="7">กรกฎาคม</option>
+                                <option value="8">สิงหาคม</option>
+                                <option value="9">กันยายน</option>
+                                <option value="10">ตุลาคม</option>
+                                <option value="11">พฤศจิกายน</option>
+                                <option value="12">ธันวาคม</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="monthly-year-select" class="block text-slate-300 mb-2">เลือกปี:</label>
+                            <select id="monthly-year-select" class="form-input p-2 rounded-lg">
+                                <!-- Years will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div id="monthly-stats-display" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Monthly stats will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Detailed Statistics Table -->
+                <div class="mt-8">
+                    <h4 class="text-xl font-semibold text-slate-300 mb-4 border-b border-slate-600 pb-2">รายละเอียดการใช้งาน</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-slate-300">
+                            <thead class="text-xs text-slate-400 uppercase bg-slate-800">
+                                <tr>
+                                    <th class="px-6 py-3">วันที่</th>
+                                    <th class="px-6 py-3">เวลา</th>
+                                    <th class="px-6 py-3">กิจกรรม</th>
+                                    <th class="px-6 py-3">ผู้ดูแล</th>
+                                    <th class="px-6 py-3">จำนวนชั่วโมง</th>
+                                    <th class="px-6 py-3">ประเภท</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-table-body" class="bg-slate-900">
+                                <!-- Table rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -493,15 +616,16 @@
                 { id: 't10', label: 'คาบ 10', time: '16:10-17:00' },
             ];
 
-            // ตารางปิดกั้นการจองตามวันในสัปดาห์
+            // ตารางคาบเรียนประจำวิชาคอมพิวเตอร์ตามวันในสัปดาห์
+            // ช่วงเวลาเหล่านี้มีการเรียนการสอนประจำ ไม่สามารถจองเพิ่มเติมได้
             const blockedTimeSlots = {
-                1: ['t7', 't8'], // วันจันทร์: คาบ 7-8
-                2: ['t1', 't2', 't5', 't6', 't7', 't8'], // วันอังคาร: คาบ 1-2 และ คาบ 5-8
-                3: ['t6', 't7', 't9', 't10'], // วันพุธ: คาบ 6-7 และ คาบ 9-10
-                5: ['t1', 't2', 't3', 't7', 't8', 't9'] // วันศุกร์: คาบ 1-3 และ คาบ 7-9
+                1: ['t7', 't8'], // วันจันทร์: คาบ 7-8 (คาบเรียนคอมพิวเตอร์)
+                2: ['t1', 't2', 't5', 't6', 't7', 't8'], // วันอังคาร: คาบ 1-2 และ คาบ 5-8 (คาบเรียนคอมพิวเตอร์)
+                3: ['t6', 't7', 't9', 't10'], // วันพุธ: คาบ 6-7 และ คาบ 9-10 (คาบเรียนคอมพิวเตอร์)
+                5: ['t1', 't2', 't3', 't7', 't8', 't9'] // วันศุกร์: คาบ 1-3 และ คาบ 7-9 (คาบเรียนคอมพิวเตอร์)
             };
 
-            // ฟังก์ชันตรวจสอบว่าช่วงเวลานั้นถูกปิดกั้นหรือไม่
+            // ฟังก์ชันตรวจสอบว่าช่วงเวลานั้นมีคาบเรียนคอมพิวเตอร์ประจำหรือไม่
             function isTimeSlotBlocked(date, slotId) {
                 const dayOfWeek = new Date(date).getDay();
                 return blockedTimeSlots[dayOfWeek] && blockedTimeSlots[dayOfWeek].includes(slotId);
@@ -710,7 +834,7 @@
                     label.classList.remove('disabled', 'blocked');
                     
                     if (isBlocked) {
-                        // ช่วงเวลาถูกปิดกั้นตามวันในสัปดาห์
+                        // ช่วงเวลามีคาบเรียนคอมพิวเตอร์ประจำ
                         checkbox.disabled = true;
                         checkbox.checked = false;
                         label.classList.add('blocked');
@@ -929,6 +1053,397 @@
                     fetchBookings();
                 }
             }, 10 * 60 * 1000);
+
+            // Statistics functionality
+            const statsModal = document.getElementById('stats-modal');
+            const closeStatsModalBtn = document.getElementById('close-stats-modal');
+            const statsBtn = document.getElementById('stats-btn');
+            const statsLoading = document.getElementById('stats-loading');
+
+            // Statistics calculation functions
+            function countPeriodsInTimeString(timeString) {
+                if (!timeString) return 0;
+                
+                // Check for full day booking
+                if (timeString.toLowerCase().includes('ทั้งวัน')) {
+                    return 10; // All 10 periods
+                }
+                
+                // Count individual periods (คาบ 1, คาบ 2, etc.)
+                const periodRegex = /คาบ\s*\d+/g;
+                const matches = timeString.match(periodRegex);
+                if (matches) {
+                    return matches.length;
+                }
+                
+                // For custom time entries, estimate based on common patterns
+                if (timeString.includes('-')) {
+                    // Try to parse time ranges like "9:00-11:00"
+                    const timeRanges = timeString.split(',');
+                    let totalHours = 0;
+                    
+                    timeRanges.forEach(range => {
+                        const trimmedRange = range.trim();
+                        if (trimmedRange.includes('-')) {
+                            // Rough estimation: assume each custom time range is about 1-2 hours
+                            totalHours += 1;
+                        }
+                    });
+                    
+                    return Math.max(1, totalHours); // At least 1 hour
+                }
+                
+                return 1; // Default to 1 hour for any other format
+            }
+
+            function calculateBlockedHoursForDateRange(startDate, endDate) {
+                let totalBlockedHours = 0;
+                const currentDate = new Date(startDate);
+                
+                while (currentDate <= endDate) {
+                    const dayOfWeek = currentDate.getDay();
+                    if (blockedTimeSlots[dayOfWeek]) {
+                        totalBlockedHours += blockedTimeSlots[dayOfWeek].length;
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                
+                return totalBlockedHours;
+            }
+
+            function calculateStatistics(bookingsData, startDate = null, endDate = null) {
+                let filteredBookings = bookingsData;
+                
+                // Filter by date range if provided
+                if (startDate && endDate) {
+                    filteredBookings = bookingsData.filter(booking => {
+                        const bookingDate = new Date(booking.date);
+                        return bookingDate >= startDate && bookingDate <= endDate;
+                    });
+                }
+                
+                let totalActualBookings = 0;
+                let totalActualHours = 0;
+                
+                filteredBookings.forEach(booking => {
+                    const hours = countPeriodsInTimeString(booking.time);
+                    totalActualBookings += 1;
+                    totalActualHours += hours;
+                });
+                
+                // Calculate blocked hours for the date range
+                let totalBlockedHours = 0;
+                if (startDate && endDate) {
+                    totalBlockedHours = calculateBlockedHoursForDateRange(startDate, endDate);
+                } else {
+                    // Calculate blocked hours for all dates that have bookings
+                    const uniqueDates = [...new Set(bookingsData.map(b => b.date))];
+                    uniqueDates.forEach(dateString => {
+                        const date = new Date(dateString);
+                        const dayOfWeek = date.getDay();
+                        if (blockedTimeSlots[dayOfWeek]) {
+                            totalBlockedHours += blockedTimeSlots[dayOfWeek].length;
+                        }
+                    });
+                }
+                
+                return {
+                    actualBookings: totalActualBookings,
+                    actualHours: totalActualHours,
+                    blockedPeriods: Math.floor(totalBlockedHours), // Convert to number of blocked periods
+                    blockedHours: totalBlockedHours,
+                    totalBookings: totalActualBookings + Math.floor(totalBlockedHours),
+                    totalHours: totalActualHours + totalBlockedHours,
+                    bookingsData: filteredBookings
+                };
+            }
+
+            function populateYearSelectors() {
+                const yearSelects = [document.getElementById('year-select'), document.getElementById('monthly-year-select')];
+                const currentYear = new Date().getFullYear();
+                const years = [];
+                
+                // Get years from bookings data
+                bookings.forEach(booking => {
+                    const year = new Date(booking.date).getFullYear();
+                    if (!years.includes(year)) {
+                        years.push(year);
+                    }
+                });
+                
+                // Add current year if not present
+                if (!years.includes(currentYear)) {
+                    years.push(currentYear);
+                }
+                
+                years.sort((a, b) => b - a); // Sort descending
+                
+                yearSelects.forEach(select => {
+                    select.innerHTML = '';
+                    years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year + 543; // Convert to Buddhist Era
+                        if (year === currentYear) option.selected = true;
+                        select.appendChild(option);
+                    });
+                });
+            }
+
+            function displayTotalStatistics() {
+                const stats = calculateStatistics(bookings);
+                
+                document.getElementById('total-bookings').textContent = stats.totalBookings.toLocaleString();
+                document.getElementById('total-hours').textContent = stats.totalHours.toLocaleString();
+                document.getElementById('actual-bookings').textContent = stats.actualBookings.toLocaleString();
+                document.getElementById('actual-hours').textContent = stats.actualHours.toLocaleString();
+                document.getElementById('blocked-periods').textContent = stats.blockedPeriods.toLocaleString();
+                document.getElementById('blocked-hours').textContent = stats.blockedHours.toLocaleString();
+                
+                updateStatsTable(stats.bookingsData);
+            }
+
+            function displayYearlyStatistics(year) {
+                const startDate = new Date(year, 0, 1);
+                const endDate = new Date(year, 11, 31);
+                const stats = calculateStatistics(bookings, startDate, endDate);
+                
+                const yearlyDisplay = document.getElementById('yearly-stats-display');
+                yearlyDisplay.innerHTML = `
+                    <div class="bg-gradient-to-br from-purple-900 to-purple-800 p-6 rounded-xl border border-purple-700">
+                        <h4 class="text-xl font-semibold text-purple-200 mb-2">📊 สถิติปี ${year + 543}</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-purple-300">การจองทั้งหมด:</span>
+                                <span class="text-white font-semibold">${stats.totalBookings} ครั้ง</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-purple-300">ชั่วโมงรวม:</span>
+                                <span class="text-white font-semibold">${stats.totalHours} ชั่วโมง</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-purple-300">การจองห้องเรียน:</span>
+                                <span class="text-green-300 font-semibold">${stats.actualBookings} ครั้ง</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-purple-300">คาบเรียนคอมพิวเตอร์:</span>
+                                <span class="text-blue-300 font-semibold">${stats.blockedPeriods} คาบ</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 p-6 rounded-xl border border-slate-600">
+                        <h4 class="text-xl font-semibold text-slate-200 mb-4">รายละเอียดรายเดือน</h4>
+                        <div class="space-y-2 max-h-64 overflow-y-auto" id="monthly-breakdown">
+                            <!-- Monthly breakdown will be populated here -->
+                        </div>
+                    </div>
+                `;
+                
+                // Generate monthly breakdown
+                const monthlyBreakdown = document.getElementById('monthly-breakdown');
+                const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 
+                                   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+                
+                for (let month = 0; month < 12; month++) {
+                    const monthStart = new Date(year, month, 1);
+                    const monthEnd = new Date(year, month + 1, 0);
+                    const monthStats = calculateStatistics(bookings, monthStart, monthEnd);
+                    
+                    if (monthStats.totalBookings > 0) {
+                        monthlyBreakdown.innerHTML += `
+                            <div class="flex justify-between items-center p-2 bg-slate-700 rounded">
+                                <span class="text-slate-300">${monthNames[month]}</span>
+                                <div class="text-right">
+                                    <div class="text-white font-semibold">${monthStats.totalBookings} ครั้ง</div>
+                                    <div class="text-slate-400 text-sm">${monthStats.totalHours} ชั่วโมง</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                updateStatsTable(stats.bookingsData);
+            }
+
+            function displayMonthlyStatistics(month, year) {
+                const startDate = new Date(year, month - 1, 1);
+                const endDate = new Date(year, month, 0);
+                const stats = calculateStatistics(bookings, startDate, endDate);
+                
+                const monthNames = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 
+                                   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+                
+                const monthlyDisplay = document.getElementById('monthly-stats-display');
+                monthlyDisplay.innerHTML = `
+                    <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 p-6 rounded-xl border border-indigo-700">
+                        <h4 class="text-xl font-semibold text-indigo-200 mb-2">📅 สถิติ${monthNames[month]} ${year + 543}</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-indigo-300">การจองทั้งหมด:</span>
+                                <span class="text-white font-semibold">${stats.totalBookings} ครั้ง</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-indigo-300">ชั่วโมงรวม:</span>
+                                <span class="text-white font-semibold">${stats.totalHours} ชั่วโมง</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-indigo-300">การจองห้องเรียน:</span>
+                                <span class="text-green-300 font-semibold">${stats.actualBookings} ครั้ง</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-indigo-300">คาบเรียนคอมพิวเตอร์:</span>
+                                <span class="text-blue-300 font-semibold">${stats.blockedPeriods} คาบ</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 p-6 rounded-xl border border-slate-600">
+                        <h4 class="text-xl font-semibold text-slate-200 mb-4">การใช้งานรายวัน</h4>
+                        <div class="space-y-1 max-h-64 overflow-y-auto">
+                            ${stats.bookingsData.length > 0 ? 
+                                stats.bookingsData.map(booking => `
+                                    <div class="flex justify-between items-center p-2 bg-slate-700 rounded text-sm">
+                                        <span class="text-slate-300">${new Date(booking.date).toLocaleDateString('th-TH')}</span>
+                                        <span class="text-white">${countPeriodsInTimeString(booking.time)} ชั่วโมง</span>
+                                    </div>
+                                `).join('') 
+                                : '<p class="text-slate-400 text-center py-4">ไม่มีการใช้งานในเดือนนี้</p>'
+                            }
+                        </div>
+                    </div>
+                `;
+                
+                updateStatsTable(stats.bookingsData);
+            }
+
+            function updateStatsTable(bookingsData) {
+                const tableBody = document.getElementById('stats-table-body');
+                
+                if (bookingsData.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-slate-400">ไม่มีข้อมูลการจอง</td></tr>';
+                    return;
+                }
+                
+                // Create combined data including computer class periods
+                const allUsageData = [];
+                
+                // Add actual bookings
+                bookingsData.forEach(booking => {
+                    allUsageData.push({
+                        date: booking.date,
+                        time: booking.time || 'N/A',
+                        activity: booking.activity || 'N/A',
+                        teacher: booking.teacher || 'N/A',
+                        hours: countPeriodsInTimeString(booking.time),
+                        type: 'booking'
+                    });
+                });
+                
+                // Add computer class periods for dates that have bookings
+                const uniqueDates = [...new Set(bookingsData.map(b => b.date))];
+                uniqueDates.forEach(dateString => {
+                    const date = new Date(dateString);
+                    const dayOfWeek = date.getDay();
+                    if (blockedTimeSlots[dayOfWeek]) {
+                        const blockedPeriods = blockedTimeSlots[dayOfWeek].map(slotId => {
+                            const slot = timeSlots.find(s => s.id === slotId);
+                            return `${slot.label} (${slot.time})`;
+                        }).join(', ');
+                        
+                        allUsageData.push({
+                            date: dateString,
+                            time: blockedPeriods,
+                            activity: 'เรียนวิชาคอมพิวเตอร์ประจำ',
+                            teacher: 'ครูประจำวิชา',
+                            hours: blockedTimeSlots[dayOfWeek].length,
+                            type: 'computer-class'
+                        });
+                    }
+                });
+                
+                tableBody.innerHTML = allUsageData
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .map(usage => `
+                        <tr class="border-b border-slate-700 hover:bg-slate-800">
+                            <td class="px-6 py-4">${new Date(usage.date).toLocaleDateString('th-TH')}</td>
+                            <td class="px-6 py-4">${usage.time}</td>
+                            <td class="px-6 py-4">${usage.activity}</td>
+                            <td class="px-6 py-4">${usage.teacher}</td>
+                            <td class="px-6 py-4 font-semibold">${usage.hours}</td>
+                            <td class="px-6 py-4">
+                                ${usage.type === 'booking' ? 
+                                    '<span class="bg-green-800 text-green-200 px-2 py-1 rounded-full text-xs">การจองห้องเรียน</span>' :
+                                    '<span class="bg-blue-800 text-blue-200 px-2 py-1 rounded-full text-xs">💻 คาบเรียนประจำ</span>'
+                                }
+                            </td>
+                        </tr>
+                    `).join('');
+            }
+
+            // Statistics modal event handlers
+            statsBtn.addEventListener('click', () => {
+                statsModal.style.display = 'flex';
+                populateYearSelectors();
+                displayTotalStatistics();
+            });
+
+            closeStatsModalBtn.addEventListener('click', () => {
+                statsModal.style.display = 'none';
+            });
+
+            // Tab switching
+            document.querySelectorAll('.stats-tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Update tab buttons
+                    document.querySelectorAll('.stats-tab-btn').forEach(b => {
+                        b.className = 'stats-tab-btn btn-secondary px-4 py-2 rounded-lg text-sm';
+                    });
+                    e.target.className = 'stats-tab-btn btn-primary px-4 py-2 rounded-lg text-sm';
+                    
+                    // Show/hide content
+                    document.querySelectorAll('.stats-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    
+                    const targetId = e.target.id.replace('-btn', '-content');
+                    document.getElementById(targetId).classList.remove('hidden');
+                    
+                    // Load appropriate data
+                    if (targetId === 'stats-total-content') {
+                        displayTotalStatistics();
+                    } else if (targetId === 'stats-yearly-content') {
+                        const year = parseInt(document.getElementById('year-select').value);
+                        displayYearlyStatistics(year);
+                    } else if (targetId === 'stats-monthly-content') {
+                        const month = parseInt(document.getElementById('month-select').value);
+                        const year = parseInt(document.getElementById('monthly-year-select').value);
+                        displayMonthlyStatistics(month, year);
+                    }
+                });
+            });
+
+            // Year and month selectors
+            document.getElementById('year-select').addEventListener('change', (e) => {
+                displayYearlyStatistics(parseInt(e.target.value));
+            });
+
+            document.getElementById('month-select').addEventListener('change', (e) => {
+                const month = parseInt(e.target.value);
+                const year = parseInt(document.getElementById('monthly-year-select').value);
+                displayMonthlyStatistics(month, year);
+            });
+
+            document.getElementById('monthly-year-select').addEventListener('change', (e) => {
+                const month = parseInt(document.getElementById('month-select').value);
+                const year = parseInt(e.target.value);
+                displayMonthlyStatistics(month, year);
+            });
+
+            // Close modal when clicking outside
+            statsModal.addEventListener('click', (e) => {
+                if (e.target === statsModal) {
+                    statsModal.style.display = 'none';
+                }
+            });
 
             // Initial load
             generateTimeSlots();
